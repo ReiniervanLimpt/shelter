@@ -11,6 +11,8 @@
       <article class="animal frame">
         <figure class=frame-image>
           <img src="https://http.cat/<%= err.id  %>" alt="<%= err.id %> <%= err.title %>">
+          <h1><%= err.title %></h1>
+          <p><%= err.id %>: <%= err.detail %></p>
         </figure>
       </article>
     <% } else { %>
