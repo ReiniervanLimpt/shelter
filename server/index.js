@@ -18,10 +18,46 @@ module.exports = express()
   // .get('/:id', get)
   // .put('/:id', set)
   // .patch('/:id', change)
-  //  .delete('/:id', removeTarget) --- got stuck on trying to add a function called *removeTarget* t0 run after a DELETE request is added to * /:id* while i defined the function on line 62 the terminal says its undefined??
+  .delete('/:id', removeTarget)
   .get('/', all)
   .get('/:id', get) // function *get* will run when theres a GET request to an */:id*
   .listen(1902)
+
+function removeTarget(req, res)
+  {
+    var id = req.params.id
+    var has
+
+    try
+    {
+      has = db.has(id)
+    }
+    catch (err) // als has == false klopt de request niet
+    {
+      var result = { errors: [{ id: 400, title: 'Bad request' }], data: {} }
+      res.json(result)
+      return
+    }
+    if (db.removed(id)) // checkt of het id verwijderd is
+    {
+      var result = { errors: [{ id:410, title: 'the page has been removed'}], data: {} }
+      res.json(result)
+    }
+    else
+    {
+      if (has) // als het niet verwijderd is
+      {
+        id = db.remove(id) // wordt het id verwijderd
+        var result = { errors: [{ id: 204, title: 'No content' }], data: {} }
+        res.json(result)
+      }
+      else // als de request klopt maar er niks verwijderd kan worden krijg je een 404 terug
+      {
+        var result = { errors: [{ id: 404, title: 'Page not found' }], data: {} }
+        res.json(result)
+      }
+    }
+}
 
 function all(req, res) {
   var result = {errors: [], data: db.all()}
@@ -58,7 +94,6 @@ function get(req, res) {
     ]
       res.render('error.ejs', Object.assign({}, result, helpers))
   }
-// function removeTarget(req, res) {}
 
   if (has) // if the requested id is present in the database...
   {
@@ -70,6 +105,18 @@ function get(req, res) {
     })
   //  result.data = db.get(id) // sends the data of the id on which a get request is executed
   //  res.render('detail.ejs', Object.assign({}, result, helpers)) // renders the detail.ejs file
+  }
+  else if (db.removed(id))
+  {
+    result.errors = // overwrites the values in the errors array of var result
+    [
+      {
+        title: 'The page is gone',
+        id: 410,
+        detail: 'The page used to exist but is now gone'
+      }
+    ]
+    res.render('error.ejs', Object.assign({}, result, helpers))
   }
   else // if the requested id is not present in the database...
   {
